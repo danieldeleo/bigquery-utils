@@ -32,4 +32,4 @@ initcap:
 translate:
   - test:
     input: CAST("Etiam.laoreet.libero@sodalesMaurisblandit.edu" AS STRING), CAST("@" AS STRING), CAST("." AS STRING)
-    output: CAST("Etiam.laoreet.libero.sodalesMaurisblandit.edu" AS STRING)
+    expected_output: CAST("Etiam.laoreet.libero.sodalesMaurisblandit.edu" AS STRING)
