@@ -29,6 +29,10 @@ BIGQUERY_TEST_DATASET_MAPPINGS = {
 class Utils(object):
 
     @staticmethod
+    def get_udfs_parent_dir():
+        return 'udfs/'
+
+    @staticmethod
     def load_test_cases(udf_path):
         udf_dir = '/'.join(udf_path.split('/')[:-1])
         yaml_test_data_path = f'{udf_dir}/test_cases.yaml'
@@ -51,7 +55,7 @@ class Utils(object):
         with open(udf_path) as udf_file:
             udf_sql = udf_file.read()
         udf_sql = udf_sql.replace('\n', ' ')
-        pattern = re.compile(r'FUNCTION\s+(`?.+?`?.*?\))\s+AS')
+        pattern = re.compile(r'FUNCTION\s+(`?.+?`?.*?\)).*?\s+AS')
         match = pattern.search(udf_sql)
         if match:
             udf_name = match[1]

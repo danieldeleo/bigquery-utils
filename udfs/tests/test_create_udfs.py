@@ -23,8 +23,7 @@ from google.cloud.bigquery.table import _EmptyRowIterator
 
 from utils import Utils
 
-UDF_DIR = '../migration'
-UDF_PATHS = glob.glob(UDF_DIR + '/**/*.sql', recursive=True)
+UDF_PATHS = glob.glob(Utils.get_udfs_parent_dir() + '/**/*.sql', recursive=True)
 
 
 class TestCreateUDFs(unittest.TestCase):
