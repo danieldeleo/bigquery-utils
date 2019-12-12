@@ -26,6 +26,7 @@ UDF_PATHS = glob.glob(Utils.get_udfs_parent_dir() + '/**/*.sql', recursive=True)
 
 
 class TestRunUDFs(unittest.TestCase):
+
     @parameterized.expand(UDF_PATHS)
     def test_run_udf_and_verify_expected_result(self, udf_path):
         client = bigquery.Client()
@@ -50,7 +51,7 @@ class TestRunUDFs(unittest.TestCase):
                 except GoogleAPICallError as e:
                     self.fail(e.message)
         else:
-            self.skipTest('Test inputs and outputs are not available')
+            self.skipTest(f'Test inputs and outputs are not provided for : {udf_path}')
 
 
 if __name__ == '__main__':
