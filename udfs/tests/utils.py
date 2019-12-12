@@ -23,7 +23,7 @@ from yaml import load
 BIGQUERY_TEST_DATASET_MAPPINGS = {
     'teradata': 'td_test',
     'redshift': 'rs_test',
-    'community': 'fn_test'
+    'community': 'fn_test',
 }
 
 
