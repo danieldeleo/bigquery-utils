@@ -73,7 +73,8 @@ class UDFTest(unittest.TestCase):
                 except GoogleAPICallError as e:
                     self.fail(e.message)
         else:
-            self.skipTest('Test inputs and outputs are not available')
+            self.skipTest(f'Test inputs and outputs are not provided for: '
+                          f' {udf_path}')
 
     @staticmethod
     def extract_udf_name(udf_path):
