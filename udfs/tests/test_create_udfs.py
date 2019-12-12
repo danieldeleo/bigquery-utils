@@ -23,13 +23,11 @@ from google.cloud.bigquery.table import _EmptyRowIterator
 
 from utils import Utils
 
-UDF_PATHS = glob.glob(Utils.get_udfs_parent_dir() + '/**/*.sql', recursive=True)
-
 
 class TestCreateUDFs(unittest.TestCase):
 
-    @parameterized.expand(UDF_PATHS)
-    def test_create_udf(cls, udf_path):
+    @parameterized.expand(Utils.get_all_udf_paths())
+    def test_create_udf(self, udf_path):
         client = bigquery.Client()
         bq_test_dataset = Utils.get_target_bq_dataset(udf_path)
         client.create_dataset(bq_test_dataset, exists_ok=True)
@@ -44,9 +42,9 @@ class TestCreateUDFs(unittest.TestCase):
                     udf_file.read(),
                     job_config=job_config
                 ).result()
-                cls.assertIsInstance(udf_creation_result, _EmptyRowIterator)
+                self.assertIsInstance(udf_creation_result, _EmptyRowIterator)
             except GoogleAPICallError as e:
-                cls.fail(e.message)
+                self.fail(e.message)
 
 
 if __name__ == '__main__':

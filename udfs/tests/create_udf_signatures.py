@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import glob
 import unittest
 
 from parameterized import parameterized
@@ -23,13 +22,11 @@ from google.cloud.bigquery.table import _EmptyRowIterator
 
 from utils import Utils
 
-UDF_PATHS = glob.glob(Utils.get_udfs_parent_dir() + '/**/*.sql', recursive=True)
-
 
 class CreateUDFSignatures(unittest.TestCase):
 
-    @parameterized.expand(UDF_PATHS)
-    def test_create_udf_signature(cls, udf_path):
+    @parameterized.expand(Utils.get_all_udf_paths())
+    def test_create_udf_signature(self, udf_path):
         client = bigquery.Client()
         bq_test_dataset = Utils.get_target_bq_dataset(udf_path)
         client.create_dataset(bq_test_dataset, exists_ok=True)
@@ -44,9 +41,9 @@ class CreateUDFSignatures(unittest.TestCase):
                 f'CREATE OR REPLACE FUNCTION {udf_name} AS (0)',
                 job_config=job_config
             ).result()
-            cls.assertIsInstance(udf_creation_result, _EmptyRowIterator)
+            self.assertIsInstance(udf_creation_result, _EmptyRowIterator)
         except GoogleAPICallError as e:
-            cls.fail(e.message)
+            self.fail(e.message)
 
 
 if __name__ == '__main__':

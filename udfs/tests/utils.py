@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import glob
 from os import path
 from os.path import dirname
 import re
@@ -31,6 +32,10 @@ class Utils(object):
     @staticmethod
     def get_udfs_parent_dir():
         return 'udfs/'
+
+    @staticmethod
+    def get_all_udf_paths():
+        return glob.glob(Utils.get_udfs_parent_dir() + '/**/*.sql', recursive=True)
 
     @staticmethod
     def load_test_cases(udf_path):

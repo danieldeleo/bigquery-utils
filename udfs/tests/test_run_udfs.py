@@ -22,12 +22,10 @@ from google.api_core.exceptions import GoogleAPICallError
 
 from utils import Utils
 
-UDF_PATHS = glob.glob(Utils.get_udfs_parent_dir() + '/**/*.sql', recursive=True)
-
 
 class TestRunUDFs(unittest.TestCase):
 
-    @parameterized.expand(UDF_PATHS)
+    @parameterized.expand(Utils.get_all_udf_paths())
     def test_run_udf_and_verify_expected_result(self, udf_path):
         client = bigquery.Client()
         bq_test_dataset = Utils.get_target_bq_dataset(udf_path)
