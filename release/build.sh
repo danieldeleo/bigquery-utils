@@ -179,11 +179,12 @@ function deploy() {
 #   None
 #######################################
 function main() {
-  cd $SCRIPT_DIR/..
+  cd $SCRIPT_DIR/.. || exit
   local branch=$1
+  local pull_request_num=$2
   printf "Branch: $branch\n"
 
-  if [[ "$branch" == "master" ]]; then
+  if [[ "$branch" == "master" && -n "$pull_request_num" ]]; then
     deploy
   else
     build
