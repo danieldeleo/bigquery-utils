@@ -1,0 +1,29 @@
+
+config {
+    type: "table",
+    schema: "dev_data_zone",
+    name: "full_customer_information",
+    assertions: {
+        uniqueKey: ["customerID"],
+        nonNull: ["first_name","last_name","date_of_birth","gender","RFC", "telephone_number"],
+        rowConditions:
+        [
+            custom_test.test_telephone_number("telephone_number")
+        ]
+    }
+}
+
+SELECT
+    customerID,
+    first_name,
+    last_name,
+    date_of_birth,
+    gender,
+    RFC,
+    telephone_number
+FROM
+    ${ ref("customer_info") }
+LEFT JOIN
+    ${ ref("customer") }
+USING
+    (customerID)
