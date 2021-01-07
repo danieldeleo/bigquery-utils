@@ -1,0 +1,50 @@
+config {
+    type: "view",
+    schema: "dev_data_zone",
+    name: "phone_assertions_test",
+    assertions: {
+        nonNull: ["phone_number"],
+        rowConditions: 
+        [
+            phone_assertions.test_telephone_number_digits("phone_number"),
+            phone_assertions.test_telephone_number_start_with_zero("phone_number"),
+            phone_assertions.test_repeated_phone_number("phone_number"),
+            phone_assertions.test_only_contain_digit("phone_number")
+        ]
+    }
+}
+
+/* Uncomment each block of SQL statement to perform assertions tests */
+
+/*
+    test_telephone_number_digits
+    Methods should return false if a phone number has less than 10 digits
+*/
+SELECT "5123456789" AS phone_number UNION ALL   --This should pass 
+SELECT "1234567899" AS phone_number UNION ALL   --This should pass 
+SELECT "1234567" AS phone_number    UNION ALL            --This should fail
+
+/*
+    test_telephone_number_start_with_zero
+    Methods should return false if a phone number starts with 0
+*/
+SELECT "5123456789" AS phone_number UNION ALL   --This should pass 
+SELECT "4576839485" AS phone_number UNION ALL   --This should pass 
+SELECT "0123456789" AS phone_number UNION ALL               --This should fail
+
+
+/*
+    test_repeated_phone_number
+    Methods should return false if a digit in a phone number repeated more than 3 times
+*/
+SELECT "2938475638" AS phone_number UNION ALL   --This should pass 
+SELECT "9928374657" AS phone_number UNION ALL   --This should pass 
+SELECT "1293847888" AS phone_number UNION ALL               --This should fail
+
+/*
+    test_only_contain_digit
+    Methods should return false if a digit in a phone number contains a character
+*/
+SELECT "7847563738" AS phone_number UNION ALL   --This should pass 
+SELECT "6768907654" AS phone_number UNION ALL   --This should pass 
+SELECT "374657387a" AS phone_number                 --This should fail

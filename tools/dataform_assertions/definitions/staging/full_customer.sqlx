@@ -5,11 +5,7 @@ config {
     name: "full_customer_information",
     assertions: {
         uniqueKey: ["customerID"],
-        nonNull: ["first_name","last_name","date_of_birth","gender","RFC", "telephone_number"],
-        rowConditions:
-        [
-            custom_test.test_repeated_phone_number("telephone_number", "10")
-        ]
+        nonNull: ["first_name","last_name","date_of_birth","gender","RFC", "telephone_number"]
     }
 }
 
@@ -17,10 +13,13 @@ SELECT
     customerID,
     first_name,
     last_name,
+    second_last_name,
+    marital_status,
     date_of_birth,
     gender,
     RFC,
-    telephone_number
+    telephone_number,
+    email
 FROM
     ${ ref("customer_info") }
 LEFT JOIN

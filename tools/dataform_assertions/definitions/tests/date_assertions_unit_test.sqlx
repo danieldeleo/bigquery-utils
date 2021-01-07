@@ -1,0 +1,40 @@
+config {
+    type: "view",
+    schema: "dev_data_zone",
+    name: "date_assertions_test",
+    assertions: {
+        nonNull: ["test_date"],
+        rowConditions: 
+        [
+            date_assertions.test_future_date("test_date"),
+            date_assertions.test_valid_years("test_date"),
+            date_assertions.test_date_format("test_date", "yyyymmdd")
+        ]
+    }
+}
+
+/* Uncomment each block of SQL statement to perform assertions tests */
+
+/*
+    test_future_date
+    Methods should return fasle if a date is future
+*/
+--SELECT "1997/11/03" AS test_date UNION ALL    --This should pass 
+--SELECT "2008/08/08" AS test_date UNION ALL    --This should pass
+--SELECT "2025/03/24" AS test_date              --This should fail
+
+/*
+    test_valid_years
+    Methods should return fasle if a person is above 100 years old
+*/
+--SELECT "1997/11/03" AS test_date UNION ALL    --This should pass 
+--SELECT "2008/08/08" AS test_date UNION ALL    --This should pass
+--SELECT "1899/03/24" AS test_date              --This should fail
+
+/*
+    test_date_format
+    Methods should return fasle if a the date format miss matched
+*/
+--SELECT "19971103" AS test_date UNION ALL    --This should pass 
+--SELECT "20080808" AS test_date UNION ALL    --This should pass
+--SELECT "1899/03/24" AS test_date              --This should fail

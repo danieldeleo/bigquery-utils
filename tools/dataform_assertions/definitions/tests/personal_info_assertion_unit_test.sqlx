@@ -1,0 +1,54 @@
+config {
+    type: "view",
+    schema: "dev_data_zone",
+    name: "personal_info_assertion_test",
+    assertions: {
+        nonNull: ["test_name"],
+        rowConditions: 
+        [
+            personal_info_assertions.test_same_character_more_than_two_times("test_name")
+        ]
+    }
+}
+
+/* Uncomment each block of SQL statement to perform assertions tests */
+
+/*
+    test_email_validity
+    Return false is email is not in the foramt of abc@xyc.com or other
+*/
+--SELECT "george.bail@google.com" AS test_email UNION ALL    --This should pass 
+--SELECT "among.us@amongus.net" AS test_email UNION ALL    --This should pass
+--SELECT "1736#$%.com" AS test_email              --This should fail
+
+/*
+    test_marital_status
+    Return false if marital status is not in the list defined Married, Single, Divorced, Widowed
+*/
+--SELECT "Married" AS test_marital UNION ALL    --This should pass 
+--SELECT "Divorced" AS test_marital UNION ALL    --This should pass
+--SELECT "Happy" AS test_marital              --This should fail
+
+/*
+    test_gender_status
+    Return false if gender is not in the list defined gender
+*/
+--SELECT "Female" AS test_gender UNION ALL    --This should pass 
+--SELECT "Male" AS test_gender UNION ALL    --This should pass
+--SELECT "one" AS test_gender              --This should fail
+
+/*
+    test_name_validity
+    Return false if name is irregular
+*/
+--SELECT "Alan" AS test_name UNION ALL    --This should pass 
+--SELECT "Bob" AS test_name UNION ALL    --This should pass
+--SELECT "yuy&^%" AS test_name              --This should fail
+
+/*
+    test_same_character_more_than_two_times
+    Return false if name repeated more than 3 times
+*/
+--SELECT "Alan" AS test_name UNION ALL    --This should pass 
+--SELECT "Bob" AS test_name UNION ALL    --This should pass
+--SELECT "Alannn" AS test_name              --This should fail
