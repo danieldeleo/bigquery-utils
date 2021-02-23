@@ -1,128 +1,112 @@
-This directory contains helper views to query BigQuery audit logs \
-More information regarding each is detailed below:
+# BigQuery Audit Metadata
 
+Learn how to leverage [BigQueryAuditMetadata](https://cloud.google.com/bigquery/docs/reference/auditlogs/rest/Shared.Types/BigQueryAuditMetadata) for advanced BigQuery usage analysis. This directory is an upgrade to our previous [bigquery_audit_log_v1.sql](/views/audit/bigquery_audit_log_v1.sql) as it reads the newer and more detailed BigQueryAuditMetadata events; including information such as which tables were read/written by a given query job or which tables expired due to having an expiration time configured. The main file is: 
+* __[bigquery_audit_log_v2.sql](/views/audit/bigquery_audit_log_v2.sql)__, a SELECT statement to help you extract and format metadata
+events
 
-### [big_query_elt_script_logging.sql](/views/audit/big_query_elt_script_logging.sql)
+## Getting Started
 
-A common pattern in data warehousing for tracking results of DML statements is to collect system variable values after each DML statement and write them to a separate logging table. With BigQuery, you no longer have to log your SQL statement results because Cloud Logging allows you to store, search, analyze, monitor, and set alerts on all your BigQuery scripting activity. The new version of BigQuery metadata logs, [BigQueryAuditMetadata](https://cloud.google.com/bigquery/docs/reference/auditlogs/rest/Shared.Types/BigQueryAuditMetadata), provides rich insights into the execution of your scripts. This data can give you insight into your script performance, modifications of your data, and more. [big_query_elt_script_logging.sql](/views/audit/big_query_elt_script_logging.sql) is a BigQuery view that handles extracting and formatting BigQueryMetaData events so that you can focus on writing simple queries on top of this view to monitor your BigQuery jobs.
+Console commands, including `gcloud` and `bq`,  should be run in the Cloud Shell of the project you are working in. Several steps are performed through the Console UI.
 
-#### Prerequisites
-
-1.  Define a BigQuery log sink using any of the following methods:
-    *   [gcloud command](https://cloud.google.com/bigquery/docs/reference/auditlogs#defining_a_bigquery_log_sink_using_gcloud)
+1.  Set your environment variables, replace <your-project> and <your-dataset> with the appropriate information
+    ```
+    export PROJECT=<your-project>
+    export DATASET=<your-dataset>
+    ```
+2.  Create a BigQuery dataset to store the audit logs, the cloudaudit table will be populated once you run a BigQuery job post log sink creation  
+    ```
+    bq --project_id $PROJECT mk $DATASET
+    ```  
+3.  Define a log sink using any of the following methods:
+    *   [gcloud command](https://cloud.google.com/bigquery/docs/reference/auditlogs#defining_a_bigquery_log_sink_using_gcloud) (gcloud **alpha** is needed in order to use the parameter `--use-partitioned-tables`)
         ```
-        gcloud alpha logging sinks create my-example-sink \ 
-        bigquery.googleapis.com/projects/my-project-id/datasets/auditlog_dataset \
-        --log-filter='protoPayload.metadata.@type="type.googleapis.com/google.cloud.audit.BigQueryAuditMetadata" AND ( (protoPayload.metadata.jobChange.job.jobConfig.queryConfig.statementType="SCRIPT" AND protoPayload.metadata.jobChange.job.jobStatus.jobState="DONE" ) OR ( protoPayload.metadata.jobChange.job.jobStats.parentJobName!="" AND protoPayload.metadata.jobChange.job.jobStatus.jobState="DONE") OR protoPayload.metadata.tableDataChange.reason="QUERY")' \ 
-        --use-partitioned-tables
-        ``` 
-        Note: gcloud **alpha** is needed in order to use the parameter `--use-partitioned-tables` 
-    *   [Cloud Console Logs Viewer](https://cloud.google.com/logging/docs/export/configure_export_v2#dest-create)
-        Use this advanced filter:
-        #### protoPayload.metadata.@type="type.googleapis.com/google.cloud.audit.BigQueryAuditMetadata" AND ( (protoPayload.metadata.jobChange.job.jobConfig.queryConfig.statementType="SCRIPT" AND protoPayload.metadata.jobChange.job.jobStatus.jobState="DONE" ) OR ( protoPayload.metadata.jobChange.job.jobStats.parentJobName!="" AND protoPayload.metadata.jobChange.job.jobStatus.jobState="DONE") OR protoPayload.metadata.tableDataChange.reason!="" OR protoPayload.metadata.tableDataRead.reason!=""  OR protoPayload.metadata.tableDeletion.reason!="" )
-        *   [Partitioning](https://cloud.google.com/logging/docs/export/bigquery#partition-tables)
-            is not required, but it is strongly recommended to select it for your BigQuery destination
-            
-    Note: You can create a log sink at the folder, billing account, or organization level using an 
-    [aggregated sink](https://cloud.google.com/logging/docs/export/aggregated_sinks#creating_an_aggregated_sink).
-1.  The BigQuery audit log tables will be created in your dataset sink destination once you run a BigQuery job post sink creation.
-1.  To use the [big_query_elt_script_logging.sql](/views/audit/big_query_elt_script_logging.sql) view, simply change
-    all occurrences of `project_id.dataset_id` to your own project id and dataset name you used when creating the logging sink. 
-    Run the following sed command with your own project and dataset IDs to perform this replacement:
-    *   `sed
-        's/project_id.dataset_id/YOUR_PROJECT_ID.YOUR_DATASET_ID/'
-        big_query_elt_audit_log_v2.sql`
-1.  Execute the [big_query_elt_script_logging.sql](/views/audit/big_query_elt_script_logging.sql) SQL in your BigQuery console or command line to
-    create your view. Once created, you can do further analysis in BigQuery by querying the view, or
-    you can connect it to a BI tool such as DataStudio to build dashboards.
+        gcloud alpha logging sinks create bq-auditv2-sinky bigquery.googleapis.com/projects/$PROJECT/datasets/$DATASET --log-filter='protoPayload.metadata."@type"="type.googleapis.com/google.cloud.audit.BigQueryAuditMetadata"' --use-partitioned-tables
+        ```  
+    *   [Cloud Console Logs Viewer](https://cloud.google.com/logging/docs/export/configure_export_v2#dest-create) (Make sure to select [partitioning](https://cloud.google.com/logging/docs/export/bigquery#partition-tables)for your BigQuery destination
+    > Note: You can create a log sink at the folder, billing account, or organization level using an [aggregated sink](https://cloud.google.com/logging/docs/export/aggregated_sinks#creating_an_aggregated_sink).
+4.  Assign the log sink's service account the BigQuery Data Editor role
+    * In the console, navigate to Logging >> Logs Router 
+    * Click the 3-dot menu for the sink you created above and select *View sink details*
+    * Copy Writer identity, e.g. `serviceAccount:pXXXXXX@gcp-sa-logging.iam.gserviceaccount.com`
+    * IAM & Admin >> IAM >> ADD 
+    * For the member, input `pXXXXXX@gcp-sa-logging.iam.gserviceaccount.com` (part of the Writer identity you copied in a previous step)
+    * Assign the Bigquery Data Editor role and press Save
+5.  Update [bigquery_audit_log_v2.sql](/views/audit/bigquery_audit_log_v2.sql)
+    ```
+    git clone https://github.com/GoogleCloudPlatform/bigquery-utils.git
+    cd bigquery-utils/views/audit
+    sed -i 's/project_id.dataset_id/<your-project>.<your-dataset>/' bigquery_audit_log_v2.sql
+    ```
+    > Note: You must manually set project_id and dataset_id if you are using the Cloud Shell. Alternatively, you could download the file to your desktop and use a text editor to find/replace.
+6.  Copy the entire update file, paste into the Bigquery query editor, and run
+7.  Congratulations! From here, you can do further analysis in BigQuery by saving and querying the view, or you can connect it to a BI tool such as DataStudio as a data source and build dashboards.
     
-#### Usage Examples
-In the following examples, change all occurrences of `project_id.dataset_id` to your own values. 
+## Usage Examples
 
-* Run the following query to see the 100 most recent BigQuery scripting statements. The results are ordered with the most recent script statement first, and then further ordering is applied using the script's job id and statement start time.
-  
-  
+#### Retrieve 100 Latest SELECT SQL Queries Executed 
   ```  
-  SELECT 
-    COALESCE(parentJobId, jobId) AS common_script_job_id,
-    jobChange.jobConfig.queryConfig.query,
-    jobChange.jobConfig.queryConfig.destinationTable,
-    jobChange.jobStats.queryStats.totalBilledBytes,
-    jobChange.jobConfig.queryConfig.statementType,
-    jobChange.jobStats.createTime,
-    jobChange.jobStats.startTime,
-    jobChange.jobStats.endTime,
-    jobRuntimeMs,
-    tableDataChange.deletedRowsCount,
-    tableDataChange.insertedRowsCount,
-  FROM
-    project_id.dataset_id.bq_script_logs 
+  SELECT * EXCEPT(
+    modelDeletion,
+    modelCreation,
+    modelMetadataChange,
+    routineDeletion,
+    routineCreation,
+    routineChange)
+  FROM `project_id.dataset_id.audit_logs`
   WHERE 
     hasJobChangeEvent
-    AND (
-      jobChange.jobStats.parentJobName IS NOT NULL
-      OR jobChange.jobConfig.queryConfig.statementType = 'SCRIPT'
-    )
-  ORDER BY 
-    eventTimestamp DESC,
-    common_script_job_id,
-    jobChange.jobStats.startTime
+    AND jobChange.jobConfig.queryConfig.statementType = 'SELECT'
+  ORDER BY jobChange.jobStats.startTime DESC
   LIMIT 100
-   
-  ```
-
-* Run the following query to see the 100 most recent BigQuery scripting statements that modify table data. The results are ordered with the most recent script statement first, and then further ordering is applied using the statement's job id and statement start time. 
-
-```  
-  SELECT 
-    parentJobId,
-    jobId,
-    jobChange.jobConfig.queryConfig.query,
-    jobChange.jobConfig.queryConfig.destinationTable,
-    jobChange.jobStats.queryStats.totalBilledBytes,
-    jobChange.jobConfig.queryConfig.statementType,
-    jobChange.jobStats.createTime,
-    jobChange.jobStats.startTime,
-    jobChange.jobStats.endTime,
-    jobRuntimeMs,
-  FROM
-    project_id.dataset_id.bq_script_logs 
+  ``` 
+  
+#### Retrieve 100 Latest DML SQL Queries Executed 
+  ```  
+  SELECT * EXCEPT(
+    modelDeletion,
+    modelCreation,
+    modelMetadataChange,
+    routineDeletion,
+    routineCreation,
+    routineChange)
+  FROM `project_id.dataset_id.audit_logs`
   WHERE 
     hasJobChangeEvent
-    AND hasTableDataChangeEvent 
-    AND jobChange.jobStats.parentJobName IS NOT NULL
-  ORDER BY 
-    eventTimestamp DESC,
-    jobId,
-    jobChange.jobStats.startTime
+    AND jobChange.jobConfig.queryConfig.statementType IN (
+          'INSERT', 'DELETE', 'UPDATE', 'MERGE')
+  ORDER BY jobChange.jobStats.startTime DESC
   LIMIT 100
+  ``` 
+  
+#### Retrieve 100 Latest BigQuery Load Jobs
   ```
-
-* Run the following query to see the 100 most recent BigQuery scripting statements which use slot reservations. The results are ordered with the most recent script statement first, and then further ordering is applied using the script's job id and statement start time.
-
-  ```
-  SELECT 
-    COALESCE(parentJobId, jobId) AS common_script_job_id,
-    jobChange.jobStats.reservationUsage.name,
-    jobChange.jobStats.reservationUsage.slotMs,
-    jobChange.jobConfig.queryConfig.statementType,
-    jobChange.jobConfig.queryConfig.destinationTable,
-    jobChange.jobStats.createTime,
-    jobChange.jobStats.startTime,
-    jobChange.jobStats.endTime,
-    jobRuntimeMs,
-  FROM 
-    project_id.dataset_id.bq_script_logs 
+  SELECT * EXCEPT(
+    modelDeletion,
+    modelCreation,
+    modelMetadataChange,
+    routineDeletion,
+    routineCreation,
+    routineChange)
+  FROM `project_id.dataset_id.audit_logs`
   WHERE 
-    hasJobChangeEvent 
-    AND (
-      (jobChange.jobStats.parentJobName IS NOT NULL AND jobChange.jobStats.reservationUsage.slotMs IS NOT NULL) 
-      OR jobChange.jobConfig.queryConfig.statementType = 'SCRIPT' 
-    )
-  ORDER BY 
-    eventTimestamp DESC,
-    common_script_job_id,
-    jobChange.jobStats.startTime
+    hasJobChangeEvent AND 
+    jobChange.jobConfig.loadConfig.destinationTable IS NOT NULL
+  ORDER BY jobChange.jobStats.startTime DESC
   LIMIT 100
   ```
   
+#### Retrieve 100 Latest BigQuery Table Deletion Events
+  ```
+  SELECT * EXCEPT(
+    modelDeletion,
+    modelCreation,
+    modelMetadataChange,
+    routineDeletion,
+    routineCreation,
+    routineChange)
+  FROM `project_id.dataset_id.audit_logs`
+  WHERE 
+    hasTableDeletionEvent
+  ORDER BY jobChange.jobStats.startTime DESC
+  LIMIT 100
+  ```
