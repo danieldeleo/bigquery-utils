@@ -123,8 +123,8 @@ SELECT
         '.', tableCopy.destinationTable.tableId) AS absolutePath
     ) AS destinationTable,
     tableCopy.createDisposition,
-    tableCopy.writeDisposition,
-  ) AS tableCopy
+    tableCopy.writeDisposition
+  ) AS tableCopy,
   IF(eventName = 'table_copy_job_completed', 1, 0) AS numCopies,
   /* The following code queries data specific to the Load operation in BQ */
   totalLoadOutputBytes,
@@ -148,17 +148,17 @@ SELECT
   /* The following code queries data specific to the Extract operation in BQ */
   REGEXP_CONTAINS(jobId, 'beam') AS isBeamJob,
   STRUCT(
-    extract.destinationUris,
+    `extract`.destinationUris,
     STRUCT(
-      extract.sourceTable.projectId,
-      extract.sourceTable.datasetId,
-      extract.sourceTable.tableId,
-      CONCAT(extract.sourceTable.datasetId, '.', extract.sourceTable.tableId)
+      `extract`.sourceTable.projectId,
+      `extract`.sourceTable.datasetId,
+      `extract`.sourceTable.tableId,
+      CONCAT(`extract`.sourceTable.datasetId, '.', `extract`.sourceTable.tableId)
       AS relativeTableRef,
-      CONCAT(extract.sourceTable.projectId, '.', extract.sourceTable.datasetId,
-      '.', extract.sourceTable.tableId) AS absoluteTableRef
+      CONCAT(`extract`.sourceTable.projectId, '.', `extract`.sourceTable.datasetId,
+      '.', `extract`.sourceTable.tableId) AS absoluteTableRef
     ) AS sourceTable
-  ) AS extract,
+  ) AS `extract`,
   IF(eventName = 'extract_job_completed', 1, 0) AS numExtracts,
   /* The following code queries data specific to the Query operation in BQ */
   REGEXP_CONTAINS(query.query, 'cloudaudit_googleapis_com_data_access_') AS isAuditDashboardQuery,
