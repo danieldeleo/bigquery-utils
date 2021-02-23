@@ -1,7 +1,7 @@
 # BigQuery Audit Metadata
 
-Learn how to leverage [BigQueryAuditMetadata](https://cloud.google.com/bigquery/docs/reference/auditlogs/rest/Shared.Types/BigQueryAuditMetadata) for advanced BigQuery usage analysis. This directory is an upgrade to our previous [bigquery_audit_log_v1.sql](/views/audit/bigquery_audit_log_v1.sql) as it reads the newer and more detailed BigQueryAuditMetadata events; including information such as which tables were read/written by a given query job or which tables expired due to having an expiration time configured. The main file is: 
-* __[bigquery_audit_log_v2.sql](/views/audit/bigquery_audit_log_v2.sql)__, a SELECT statement to help you extract and format metadata
+Learn how to leverage [BigQueryAuditMetadata](https://cloud.google.com/bigquery/docs/reference/auditlogs/rest/Shared.Types/BigQueryAuditMetadata) for advanced BigQuery usage analysis. This directory is an upgrade to our previous [bigquery_audit_logs_v1.sql](/views/audit/bigquery_audit_logs_v1.sql) as it reads the newer and more detailed BigQueryAuditMetadata events; including information such as which tables were read/written by a given query job or which tables expired due to having an expiration time configured. The main file is: 
+* __[bigquery_audit_logs_v2.sql](/views/audit/bigquery_audit_logs_v2.sql)__, a SELECT statement to help you extract and format metadata
 events
 
 ## Getting Started
@@ -31,7 +31,7 @@ Console commands, including `gcloud` and `bq`,  should be run in the Cloud Shell
     * IAM & Admin >> IAM >> ADD 
     * For the member, input `pXXXXXX@gcp-sa-logging.iam.gserviceaccount.com` (part of the Writer identity you copied in a previous step)
     * Assign the Bigquery Data Editor role and press Save
-5.  Update [bigquery_audit_log_v2.sql](/views/audit/bigquery_audit_log_v2.sql)
+5.  Update [bigquery_audit_logs_v2.sql](/views/audit/bigquery_audit_logs_v2.sql)
     ```
     git clone https://github.com/GoogleCloudPlatform/bigquery-utils.git
     cd bigquery-utils/views/audit

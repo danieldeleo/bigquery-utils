@@ -15,13 +15,14 @@
  */
 
 /*
- * Script: BQ Audit
+ * View: bigquery_audit_logs_v1
  * Author: ryanmcdowell, freedomofnet, mihirborkar
  * Description:
- * This SQL SELECT statement extracts commonly used fields from the
- * legacy BigQuery audit data: https://cloud.google.com/bigquery/docs/reference/auditlogs/rest/Shared.Types/AuditData.
+ * This View DDL aggregates BigQuery job events based on
+ * the legacy BigQuery audit data: https://cloud.google.com/bigquery/docs/reference/auditlogs/rest/Shared.Types/AuditData.
  */
 
+CREATE OR REPLACE VIEW `project_id.dataset_id.bigquery_audit_logs_v1` AS
 WITH BQAudit AS (
   SELECT
     protopayload_auditlog.authenticationInfo.principalEmail,

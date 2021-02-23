@@ -15,15 +15,15 @@
  */
 
 /*
- * Script: BQ Audit Version 2
+ * View: bigquery_audit_logs_v2
  * Author: NamrataShah5, danieldeleo
  * Description:
- * This SQL Script aggregates BigQuery job events based on
- * the newer BigQueryAuditMetadata Stackdriver logs.
+ * This View DDL aggregates BigQuery job events based on
+ * the newer BigQueryAuditMetadata logs.
  * Reference for BigQueryAuditMetadata: https://cloud.google.com/bigquery/docs/reference/auditlogs/rest/Shared.Types/BigQueryAuditMetadata
  */
 
-CREATE OR REPLACE VIEW `project_id.dataset_id.audit_logs` AS
+CREATE OR REPLACE VIEW `project_id.dataset_id.bigquery_audit_logs_v2` AS
   WITH jobChangeEvent AS (
     SELECT
       protopayload_auditlog.authenticationInfo.principalEmail,
