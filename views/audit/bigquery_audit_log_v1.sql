@@ -18,7 +18,8 @@
  * Script: BQ Audit
  * Author: ryanmcdowell, freedomofnet, mihirborkar
  * Description:
- * This SQL Script creates a materialized source table acting as input to the Dashboard.
+ * This SQL SELECT statement extracts commonly used fields from the
+ * legacy BigQuery audit data: https://cloud.google.com/bigquery/docs/reference/auditlogs/rest/Shared.Types/AuditData.
  */
 
 WITH BQAudit AS (
@@ -41,9 +42,9 @@ WITH BQAudit AS (
       protopayload_auditlog.servicedata_v1_bigquery.jobCompletedEvent.job.jobStatistics.endTime,
       protopayload_auditlog.servicedata_v1_bigquery.jobCompletedEvent.job.jobStatistics.startTime, MILLISECOND)
       AS runtimeMs,
-    /* This code extracts the column specific to the Copy operation in BQ */
+    /* This following code extracts the column specific to the Copy operation in BQ */
     protopayload_auditlog.servicedata_v1_bigquery.jobCompletedEvent.job.jobConfiguration.tableCopy,
-    /* This code extracts the column specific to the Extract operation in BQ */
+    /* This following code extracts the column specific to the Extract operation in BQ */
     protopayload_auditlog.servicedata_v1_bigquery.jobCompletedEvent.job.jobConfiguration.extract,
     /* The following code extracts the columns specific to the Load operation in BQ */
     protopayload_auditlog.servicedata_v1_bigquery.jobCompletedEvent.job.jobStatistics.totalLoadOutputBytes,
@@ -70,9 +71,8 @@ WITH BQAudit AS (
     protopayload_auditlog.servicedata_v1_bigquery.jobCompletedEvent.job.jobConfiguration.query,
     protopayload_auditlog.servicedata_v1_bigquery.jobCompletedEvent.job.jobStatistics.referencedTables,
     protopayload_auditlog.servicedata_v1_bigquery.jobCompletedEvent.job.jobStatistics.referencedViews
-    /* This ends the code snippet that extracts columns specific to Query operation in BQ */
   FROM
-    `data-analytics-pocs.billing.cloudaudit_googleapis_com_data_access_*`
+    `project_id.dataset_id.cloudaudit_googleapis_com_data_access_*`
   WHERE
     protopayload_auditlog.serviceName = 'bigquery.googleapis.com'
     AND protopayload_auditlog.methodName = 'jobservice.jobcompleted'
@@ -85,10 +85,7 @@ WITH BQAudit AS (
     )
     AND DATE_DIFF(CURRENT_DATE(), DATE(protopayload_auditlog.servicedata_v1_bigquery.jobCompletedEvent.job.jobStatistics.startTime), month) <= 12
 )
-
-
-/* This code queries BQAudit */
-
+/* The following builds a user-friendly projection of the audit data. */
 SELECT
   principalEmail,
   callerIp,
@@ -114,12 +111,21 @@ SELECT
   endTime,
   runtimeMs,
   runtimeSecs,
-  tableCopy, /* This code queries data specific to the Copy operation */
-  CONCAT(tableCopy.destinationTable.datasetId, '.', tableCopy.destinationTable.tableId)
-    AS tableCopyDestinationTableRelativePath,
-  CONCAT(tableCopy.destinationTable.projectId, '.', tableCopy.destinationTable.datasetId, '.',
-    tableCopy.destinationTable.tableId) AS tableCopyDestinationTableAbsolutePath,
-  IF(eventName = 'table_copy_job_completed', 1, 0) AS numCopies, /* This code queries data specific to the Copy operation */
+  /* This code queries data specific to the Copy operation */
+  STRUCT(
+    tableCopy.sourceTables,
+    STRUCT(
+      tableCopy.destinationTable.projectId,
+      tableCopy.destinationTable.datasetId,
+      tableCopy.destinationTable.tableId,
+      CONCAT(tableCopy.destinationTable.datasetId, '.', tableCopy.destinationTable.tableId) AS relativePath,
+      CONCAT(tableCopy.destinationTable.projectId, '.', tableCopy.destinationTable.datasetId,
+        '.', tableCopy.destinationTable.tableId) AS absolutePath
+    ) AS destinationTable,
+    tableCopy.createDisposition,
+    tableCopy.writeDisposition,
+  ) AS tableCopy
+  IF(eventName = 'table_copy_job_completed', 1, 0) AS numCopies,
   /* The following code queries data specific to the Load operation in BQ */
   totalLoadOutputBytes,
   (totalLoadOutputBytes / pow(2,30)) AS totalLoadOutputGigabytes,
@@ -139,23 +145,21 @@ SELECT
     load.schemaJson
   ) AS load,
   IF(eventName = 'load_job_completed', 1, 0) AS numLoads,
-  /* This ends the code snippet that queries columns specific to the Load operation in BQ */
   /* The following code queries data specific to the Extract operation in BQ */
   REGEXP_CONTAINS(jobId, 'beam') AS isBeamJob,
   STRUCT(
-    `extract`.destinationUris,
+    extract.destinationUris,
     STRUCT(
-      `extract`.sourceTable.projectId,
-      `extract`.sourceTable.datasetId,
-      `extract`.sourceTable.tableId,
-      CONCAT(`extract`.sourceTable.datasetId, '.', `extract`.sourceTable.tableId)
+      extract.sourceTable.projectId,
+      extract.sourceTable.datasetId,
+      extract.sourceTable.tableId,
+      CONCAT(extract.sourceTable.datasetId, '.', extract.sourceTable.tableId)
       AS relativeTableRef,
-      CONCAT(`extract`.sourceTable.projectId, '.', `extract`.sourceTable.datasetId,
-      '.', `extract`.sourceTable.tableId) AS absoluteTableRef
+      CONCAT(extract.sourceTable.projectId, '.', extract.sourceTable.datasetId,
+      '.', extract.sourceTable.tableId) AS absoluteTableRef
     ) AS sourceTable
-  ) AS `extract`,
+  ) AS extract,
   IF(eventName = 'extract_job_completed', 1, 0) AS numExtracts,
-  /* This ends the code snippet that queries columns specific to the Extract operation in BQ */
   /* The following code queries data specific to the Query operation in BQ */
   REGEXP_CONTAINS(query.query, 'cloudaudit_googleapis_com_data_access_') AS isAuditDashboardQuery,
   errorCode IS NOT NULL AS isError,
@@ -182,6 +186,8 @@ SELECT
   totalTablesProcessed,
   totalViewsProcessed,
   totalProcessedBytes,
+  (totalProcessedBytes / pow(2,30)) AS totalProcessedGigabytes,
+  (totalProcessedBytes / pow(2,40)) AS totalProcessedTerabytes,
   totalBilledBytes,
   (totalBilledBytes / pow(2,30)) AS totalBilledGigabytes,
   (totalBilledBytes / pow(2,40)) AS totalBilledTerabytes,
