@@ -20,20 +20,25 @@ SELECT bqutil.fn.int(1.684)
 * [get_value](#get_valuek-string-arr-any-type)
 * [int](#intv-any-type)
 * [json_typeof](#json_typeofjson-string)
+* [kruskal_wallis](#kruskal_wallisarraystructfactor-string-val-float64)
 * [last_day](#lastdaydt-date)
-* [linear_interpolate](#linear_interpolate)
+* [linear_interpolate](#linear_interpolatepos-int64-prev-structx-int64-y-float64-next-structx-int64-y-float64)
+* [linear_regression](#linear_regressionarraystructstructx-float64-y-float64)
 * [median](#medianarr-any-type)
 * [nlp_compromise_number](#nlp_compromise_numberstr-string)
 * [nlp_compromise_people](#nlp_compromise_peoplestr-string)
 * [percentage_change](#percentage_changeval1-float64-val2-float64)
 * [percentage_difference](#percentage_differenceval1-float64-val2-float64)
+* [pvalue](#pvalueh-float64-dof-float64)
 * [radians](#radiansx-any-type)
 * [random_int](#random_intmin-any-type-max-any-type)
 * [random_value](#random_valuearr-any-type)
 * [translate](#translateexpression-string-characters_to_replace-string-characters_to_substitute-string)
-* [ts_gen_keyed_timestamps](#ts_gen_keyed_timestamps)
-* [ts_linear_interpolate](#ts_linear_interpolate)
-* [ts_tumble](#ts_tumble)
+* [ts_gen_keyed_timestamps](#ts_gen_keyed_timestampskeys-arraystring-tumble_seconds-int64-min_ts-timestamp-max_ts-timestamp)
+* [ts_linear_interpolate](#ts_linear_interpolatepos-timestamp-prev-structx-timestamp-y-float64-next-structx-timestamp-y-float64)
+* [ts_session_group](#ts_session_grouprow_ts-timestamp-prev_ts-timestamp-session_gap-int64)
+* [ts_slide](#ts_slidets-timestamp-period-int64-duration-int64)
+* [ts_tumble](#ts_tumbleinput_ts-timestamp-tumble_seconds-int64)
 * [typeof](#typeofinput-any-type)
 * [url_keys](#url_keysquery-string)
 * [url_param](#url_paramquery-string-p-string)
@@ -364,7 +369,7 @@ SELECT bqutil.fn.translate('mint tea', 'inea', 'osin')
 most tin
 ```
 
-### [ts_gen_keyed_timestamps(keys ARRAY<STRING>, tumble_seconds INT64, min_ts TIMESTAMP, max_ts TIMESTAMP](ts_gen_keyed_timestamps.sql)
+### [ts_gen_keyed_timestamps(keys ARRAY<STRING>, tumble_seconds INT64, min_ts TIMESTAMP, max_ts TIMESTAMP)](ts_gen_keyed_timestamps.sql)
 Generate a timestamp array associated with each key
 
 ```sql
@@ -381,7 +386,7 @@ FROM
 | def        | 2020-01-01 00:31:00 UTC |
   
 
-### [ts_linear_interpolate(pos TIMESTAMP, prev STRUCT(x TIMESTAMP, y FLOAT6), next STRUCT(x TIMESTAMP, y FLOAT64))](ts_linear_interpolation.sql)
+### [ts_linear_interpolate(pos TIMESTAMP, prev STRUCT<x TIMESTAMP, y FLOAT64>, next STRUCT<x TIMESTAMP, y FLOAT64>)](ts_linear_interpolation.sql)
 Interpolate the positions value using timestamp seconds as the x-axis
 
 ```sql
@@ -395,6 +400,80 @@ select bqutil.fn.ts_linear_interpolate(
 | f0_ |
 |-----|
 | 2.0 |
+
+### [ts_session_group(row_ts TIMESTAMP, prev_ts TIMESTAMP, session_gap INT64)](ts_session_group.sql)
+Function to compare two timestamp as being within the same session window. A timestamp in the same session window as its previous timestamp will evaluate as NULL, otherwise the current row's timestamp is returned.  The "LAST_VALUE(ts IGNORE NULLS)" window function can then be used to stamp all rows with the starting timestamp for the session window.
+
+```sql
+--5 minute (300 seconds) session window
+WITH ticks AS (
+  SELECT 'abc' as key, 1.0 AS price, CAST('2020-01-01 01:04:59 UTC' AS TIMESTAMP) AS ts
+  UNION ALL
+  SELECT 'abc', 2.0, CAST('2020-01-01 01:05:00 UTC' AS TIMESTAMP)
+  UNION ALL
+  SELECT 'abc', 3.0, CAST('2020-01-01 01:05:01 UTC' AS TIMESTAMP)
+  UNION ALL
+  SELECT 'abc', 4.0, CAST('2020-01-01 01:09:01 UTC' AS TIMESTAMP)
+  UNION ALL
+  SELECT 'abc', 5.0, CAST('2020-01-01 01:24:01 UTC' AS TIMESTAMP)
+)
+SELECT
+  * EXCEPT(session_group),
+  LAST_VALUE(session_group IGNORE NULLS)
+    OVER (PARTITION BY key ORDER BY ts ASC) AS session_group
+FROM (
+  SELECT
+    *,
+    bqutil.fn.ts_session_group(
+      ts,
+      LAG(ts) OVER (PARTITION BY key ORDER BY ts ASC),
+      300
+    ) AS session_group
+  FROM ticks 
+)
+```
+
+| key | price | ts                      |  sesssion_group         |
+|-----|-------|-------------------------|-------------------------|
+| abc | 1.0   | 2020-01-01 01:04:59 UTC | 2020-01-01 01:04:59 UTC |
+| abc | 2.0   | 2020-01-01 01:05:00 UTC | 2020-01-01 01:04:59 UTC |
+| abc | 3.0   | 2020-01-01 01:05:01 UTC | 2020-01-01 01:04:59 UTC |
+| abc | 4.0   | 2020-01-01 01:09:01 UTC | 2020-01-01 01:04:59 UTC |
+| abc | 5.0   | 2020-01-01 01:24:01 UTC | 2020-01-01 01:24:01 UTC |
+
+
+### [ts_slide(ts TIMESTAMP, period INT64, duration INT64)](ts_slide.sql)
+Calculate the sliding windows the ts parameter belongs to.
+
+```sql
+-- show a 15 minute window every 5 minutes and a 15 minute window every 10 minutes
+WITH ticks AS (
+  SELECT 1.0 AS price, CAST('2020-01-01 01:04:59 UTC' AS TIMESTAMP) AS ts
+  UNION ALL
+  SELECT 2.0, CAST('2020-01-01 01:05:00 UTC' AS TIMESTAMP)
+  UNION ALL
+  SELECT 3.0, CAST('2020-01-01 01:05:01 UTC' AS TIMESTAMP)
+)
+SELECT
+  price,
+  ts,
+  bqutil.fn.ts_slide(ts, 300, 900) as _5_15,
+  bqutil.fn.ts_slide(ts, 600, 900) as _10_15,
+FROM ticks
+```
+
+| price | ts                      | _5_15.window_start      | _5_15.window_end        | _5_15.window_start      | _5_15.window_end        |
+|-------|-------------------------|-------------------------|-------------------------|-------------------------|-------------------------|
+| 1.0   | 2020-01-01 01:04:59 UTC | 2020-01-01 00:50:00 UTC | 2020-01-01 01:05:00 UTC | 2020-01-01 00:50:00 UTC | 2020-01-01 01:05:00 UTC |
+|       |                         | 2020-01-01 00:55:00 UTC | 2020-01-01 01:10:00 UTC | 2020-01-01 01:00:00 UTC | 2020-01-01 01:15:00 UTC |
+|       |                         | 2020-01-01 01:00:00 UTC | 2020-01-01 01:15:00 UTC |                         |                         |
+| 2.0   | 2020-01-01 01:05:00 UTC | 2020-01-01 00:55:00 UTC | 2020-01-01 01:10:00 UTC | 2020-01-01 01:00:00 UTC | 2020-01-01 01:15:00 UTC |
+|       |                         | 2020-01-01 01:00:00 UTC | 2020-01-01 01:15:00 UTC |                         |                         |
+|       |                         | 2020-01-01 01:05:00 UTC | 2020-01-01 01:20:00 UTC |                         |                         |
+| 3.0   | 2020-01-01 01:05:01 UTC | 2020-01-01 00:55:00 UTC | 2020-01-01 01:10:00 UTC | 2020-01-01 01:00:00 UTC | 2020-01-01 01:15:00 UTC |
+|       |                         | 2020-01-01 01:00:00 UTC | 2020-01-01 01:15:00 UTC |                         |                         |
+|       |                         | 2020-01-01 01:05:00 UTC | 2020-01-01 01:20:00 UTC |                         |                         |
+
 
 
 ### [ts_tumble(input_ts TIMESTAMP, tumble_seconds INT64)](ts_tumble.sql)
@@ -509,4 +588,108 @@ returns:
 | 3	| 30 | 0.0 |
 | 4	| 40 | 6.324555320336759 |
 | 5	| 50 | 12.649110640673518 |
+
+
+<br/>
+<br/>
+<br/>
+
+# StatsLib: Statistical UDFs
+
+This section details the subset of community contributed [user-defined functions](https://cloud.google.com/bigquery/docs/reference/standard-sql/user-defined-functions) 
+that extend BigQuery and enable more specialized Statistical Analysis usage patterns. 
+Each UDF detailed below will be automatically synchronized to the `fn` dataset
+within the `bqutil` project for reference in your queries.
+
+For example, if you'd like to reference the `int` function within your query,
+you can reference it like the following:
+```sql
+SELECT bqutil.fn.int(1.684)
+```
+
+## UDFs
+
+* [kruskal_wallis](#kruskal_wallisarrstructfactor-string-val-float64)
+
+## Documentation
+
+### [kruskal_wallis(ARRAY(STRUCT(factor STRING, val FLOAT64))](kruskal_wallis.sql)
+Takes an array of struct where each struct (point) represents a measurement, with a group label and a measurement value
+
+The [Kruskal–Wallis test by ranks](https://en.wikipedia.org/wiki/Kruskal%E2%80%93Wallis_one-way_analysis_of_variance), Kruskal–Wallis H test (named after William Kruskal and W. Allen Wallis), or one-way ANOVA on ranks is a non-parametric method for testing whether samples originate from the same distribution. It is used for comparing two or more independent samples of equal or different sample sizes. It extends the Mann–Whitney U test, which is used for comparing only two groups. The parametric equivalent of the Kruskal–Wallis test is the one-way analysis of variance (ANOVA).
+
+* Input: array: struct <factor STRING, val FLOAT64>
+* Output: struct<H FLOAT64, p-value FLOAT64, DOF FLOAT64>
+```sql
+DECLARE data ARRAY<STRUCT<factor STRING, val FLOAT64>>;
+
+set data = [
+('a',1.0),
+('b',2.0),
+('c',2.3),
+('a',1.4),
+('b',2.2),
+('c',5.5),
+('a',1.0),
+('b',2.3),
+('c',2.3),
+('a',1.1),
+('b',7.2),
+('c',2.8)
+];
+
+
+SELECT `bqutil.fn.kruskal_wallis`(data) AS results;
+```
+
+results:
+
+| results.H	| results.p	| results.DoF	|
+|-----------|-----------|-------------|
+| 3.4230769 | 0.1805877 | 2           |
+
+
+
+### [linear_regression(ARRAY(STRUCT(STRUCT(X FLOAT64, Y FLOAT64))](linear_regression.sql)
+Takes an array of STRUCT X, Y and returns _a, b, r_ where _Y = a*X + b_, and _r_ is the "goodness of fit measure.
+
+The [Linear Regression](https://en.wikipedia.org/wiki/Linear_regression), is a linear approach to modelling the relationship between a scalar response and one or more explanatory variables (also known as dependent and independent variables). 
+
+* Input: array: struct <X FLOAT64, Y FLOAT64>
+* Output: struct<a FLOAT64,b FLOAT64, r FLOAT64>
+* 
+```sql
+DECLARE data ARRAY<STRUCT<X STRING, Y FLOAT64>>;
+set data = [ (5.1,2.5), (5.0,2.0), (5.7,2.6), (6.0,2.2), (5.8,2.6), (5.5,2.3), (6.1,2.8), (5.5,2.5), (6.4,3.2), (5.6,3.0)];
+SELECT `bqutils.fn.linear_regression`(data) AS results;
+```
+
+results:
+
+
+| results.a          	| results.b	         | results.r	       |
+|---------------------|--------------------|-------------------|
+| -0.4353361094588436 | 0.5300416418798544 | 0.632366563565354 |
+
+
+
+
+### [pvalue(H FLOAT64, dof FLOAT64)](pvalue.sql)
+Takes _H_ and _dof_ and returns _p_ probability value.
+
+The [pvalue](https://jstat.github.io/distributions.html#jStat.chisquare.cdf) is NULL Hypothesis probability of the Kruskal-Wallis (KW) test. This is obtained to be the CDF of the chisquare with the _H_ value and the Degrees of Freedom (_dof_) of the KW problem.
+
+* Input: H FLOAT64, dof FLOAT64
+* Output: p FLOAT64
+* 
+```sql
+SELECT `bqutils.fn.pvalue`(.3,2) AS results;
+```
+
+results:
+
+
+| results         	|
+|-------------------|
+|0.8607079764250578 |
 
