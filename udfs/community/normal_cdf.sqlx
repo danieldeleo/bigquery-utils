@@ -1,6 +1,7 @@
 config { hasOutput: true }
+
 /*
- * Copyright 2019 Google LLC
+ * Copyright 2021 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +16,12 @@ config { hasOutput: true }
  * limitations under the License.
  */
 
-CREATE OR REPLACE FUNCTION ${self()}(url STRING, p STRING)
-RETURNS STRING
+CREATE OR REPLACE FUNCTION ${self()}(x FLOAT64, mean FLOAT64, std FLOAT64)
+RETURNS FLOAT64
 LANGUAGE js AS """
-  result = null;
-  try {
-    query = url.split("?")[1].split("#")[0];
-    if(query) {
-      params = query.split('&').forEach(function(part) {
-        item = part.split('=');
-        if(item[0] == p ) {
-          result = decodeURIComponent(item[1]);
-        }
-      });
-    }
-  }
-  catch(err) {}
-  return result;
-""";
+  return jstat['jStat']['normal']['cdf']( x, mean, std )
+"""
+OPTIONS (
+	    library=["${JS_BUCKET}/jstat-v1.9.4.min.js"]
+);
+

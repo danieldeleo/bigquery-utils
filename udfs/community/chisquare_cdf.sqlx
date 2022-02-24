@@ -1,6 +1,6 @@
 config { hasOutput: true }
 /*
- * Copyright 2019 Google LLC
+ * Copyright 2021 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,14 @@ config { hasOutput: true }
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#standardSQL
 
-CREATE OR REPLACE FUNCTION ${self()}(url STRING, p STRING)
-RETURNS STRING
+CREATE OR REPLACE FUNCTION ${self()}(H FLOAT64, dof INT64)
+RETURNS FLOAT64 
 LANGUAGE js AS """
-  result = null;
-  try {
-    query = url.split("?")[1].split("#")[0];
-    if(query) {
-      params = query.split('&').forEach(function(part) {
-        item = part.split('=');
-        if(item[0] == p ) {
-          result = decodeURIComponent(item[1]);
-        }
-      });
-    }
-  }
-  catch(err) {}
-  return result;
-""";
+  return 1.0 - jstat.jStat['chisquare'].cdf(H, dof)
+"""
+OPTIONS ( 
+    library=["${JS_BUCKET}/jstat-v1.9.4.min.js"]
+);
+
