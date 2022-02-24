@@ -17,10 +17,7 @@
 # Only compare with master branch if this build has been triggered
 # by either a non-master branch on origin repo or a pull request.
 if [[ ! "${BRANCH_NAME}" = "master" || -n "${_PR_NUMBER}" ]]; then
-  git config user.email "builder@bigquery-utils.repo"
-  git config user.name "builder"
-  git remote
-  printf "Adding repo %s as a remote" "${_REPO_URL}"
+  printf "Setting repo %s as origin.\n" "${_REPO_URL}"
   git remote set-url origin ${_REPO_URL}
   printf "Fetching history for main branch from origin repo.\n"
   git fetch origin master
