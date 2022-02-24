@@ -19,6 +19,7 @@
 if [[ ! "${BRANCH_NAME}" = "master" || -n "${_PR_NUMBER}" ]]; then
   git config user.email "builder@bigquery-utils.repo"
   git config user.name "builder"
+  git remote
   printf "Adding repo %s as a remote" "${_REPO_URL}"
   git remote set-url origin ${_REPO_URL}
   printf "Fetching history for main branch from origin repo.\n"
