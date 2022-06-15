@@ -8,7 +8,7 @@ include "root" {
 }
 
 locals {
-  dataset_id = "tool2_dataset"
+  dataset_id = "tool2_dataset_qa"
 }
 
 inputs = {

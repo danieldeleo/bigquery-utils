@@ -4,4 +4,5 @@ module "bq_module" {
   dataset_id = var.dataset_id
   tables = var.tables
   views = var.views
+  deletion_protection = var.deletion_protection
 }

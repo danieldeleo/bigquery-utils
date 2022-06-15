@@ -8,7 +8,7 @@ include "root" {
 }
 
 locals {
-  dataset_id = "tool1_dataset"
+  dataset_id = "tool1_dataset_qa"
 }
 
 # Indicate the input values to use for the variables of the module.

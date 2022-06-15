@@ -16,6 +16,7 @@ inputs = {
   authorizer_dataset_id = local.dataset_id
   project_id = include.root.inputs.project_id
   dataset_id    = "${local.dataset_id}"
+  deletion_protection = true
   tables = [
     {
       table_id            = "sample_table"
@@ -23,8 +24,7 @@ inputs = {
       schema              = file("./json_schemas/sample_table.json")
       clustering          = []
       expiration_time     = null
-      deletion_protection = false
-      range_partitioning  = null
+       range_partitioning  = null
       time_partitioning   = null
       labels              = {}
     }

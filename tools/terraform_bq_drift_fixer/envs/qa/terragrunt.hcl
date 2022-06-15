@@ -5,7 +5,7 @@
 # notation.
 
 locals {
-  gcp_project_id = "danny-bq"
+  gcp_project_id = "dannysand"
 }
 
 inputs = {
@@ -28,8 +28,8 @@ remote_state {
   config = {
     project  = local.gcp_project_id
     location = "us"
-    bucket   = "dannybq"
-    prefix   = "qa/${path_relative_to_include()}/terraform.tfstate"
+    bucket   = "dannysand"
+    prefix   = "${get_path_from_repo_root()}"
     gcs_bucket_labels = {
       owner = "terragrunt_test"
       name  = "terraform_state_storage"

@@ -29,7 +29,7 @@ remote_state {
     project  = local.gcp_project_id
     location = "us"
     bucket   = "dannybq"
-    prefix   = "prod/${path_relative_to_include()}/terraform.tfstate"
+    prefix   = "${get_path_from_repo_root()}"
     gcs_bucket_labels = {
       owner = "terragrunt_test"
       name  = "terraform_state_storage"

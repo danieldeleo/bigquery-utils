@@ -8,6 +8,12 @@ variable "dataset_id" {
   type        = string
 }
 
+variable "deletion_protection" {
+  description = "Whether or not to allow Terraform to destroy the instance. Unless this field is set to false in Terraform state, a terraform destroy or terraform apply that would delete the instance will fail"
+  type        = bool
+  default     = false
+}
+
 variable "tables" {
   description = "A list of objects which include table_id, schema, clustering, time_partitioning, range_partitioning, expiration_time and labels."
   default     = []
