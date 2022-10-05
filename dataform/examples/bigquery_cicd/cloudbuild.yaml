@@ -15,4 +15,4 @@ steps:
       - _JS_BUCKET=${_JS_BUCKET}
       - _PR_NUMBER=${_PR_NUMBER}
       - DATAFORM_ACTIONS=${_DATAFORM_ACTIONS}
-      - DATAFORM_TAGS=val1,val2
+      - DATAFORM_TAGS=${_DATAFORM_TAGS}
