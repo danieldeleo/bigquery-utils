@@ -8,3 +8,9 @@ jstat:
   versions:
     - 1.9.3
     - 1.9.4
+languagedetect:
+  versions:
+    - 2.0.0
+fast-text:
+  versions:
+    - 1.0.2
