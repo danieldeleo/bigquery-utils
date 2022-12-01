@@ -26,6 +26,7 @@ from yaml import SafeLoader
 # to instruct webpack to not minify them.
 NO_MINIFY_JS_LIBS = {
     'js-levenshtein',
+    'fast-text'
 }
 
 
