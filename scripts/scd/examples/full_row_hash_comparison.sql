@@ -29,4 +29,4 @@ FROM
 EXCEPT DISTINCT(
   SELECT SHA256(TO_JSON_STRING(t)) row_hash
   FROM `bigquery-public-data.bitcoin_blockchain.blocks` t
-)
+);
