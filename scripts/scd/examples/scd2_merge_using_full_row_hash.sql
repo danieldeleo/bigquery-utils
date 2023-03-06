@@ -29,9 +29,14 @@ SELECT 'top load washer', 110, CAST(NULL AS BOOL), CURRENT_DATE AS eff_dt, CAST(
 UNION ALL 
 SELECT 'dishwasher', 30, CAST(NULL AS BOOL), CURRENT_DATE AS eff_dt, CAST(NULL AS DATE);
 
+-- The following example assuming staging data is made up of full table snapshots
+-- exported from an upstream source. There is no column which tracks changes and 
+-- therefore you have to find changes by doing full row hashes.
+
 -- Merge all data back to target
 MERGE target t
 USING (
+  -- Records in staging data which have changed or are new
   SELECT s.* 
   FROM staging s
   LEFT JOIN (
@@ -61,7 +66,8 @@ USING (
     AND SHA256(FORMAT("%t", STRUCT(l.quantity, l.supply_constrained))) = SHA256(FORMAT("%t", STRUCT(s.quantity, s.supply_constrained)))
     -- END dynamic injection
   )
-  UNION ALL 
+  UNION ALL
+  -- Latest records from target table which are present in staging data
   SELECT
     t.* EXCEPT(expir_dt)
     ,IF(1=1
