@@ -36,10 +36,9 @@ SELECT 'dishwasher', 30, CAST(NULL AS BOOL), CURRENT_DATE AS eff_dt, CAST(NULL A
 -- Merge all data back to target
 MERGE target t
 USING (
-  -- Records in staging data which have changed or are new
+  -- Records in staging data which are NEW or CHANGED
   -- These records are used for the following clauses:
   --     * "WHEN NOT MATCHED BY TARGET THEN"
-  --     * "WHEN NOT MATCHED BY SOURCE THEN" 
   SELECT s.* 
   FROM staging s
   LEFT JOIN (
