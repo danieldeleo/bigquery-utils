@@ -44,7 +44,7 @@ SELECT
 t.unique_key, t.quantity, t.supply_constrained, t.eff_dt
 # END dynamic injection
 ,IF(1=1
-  # BEGIN dynamic injection (all staging columns except expir_dt)
+  # BEGIN dynamic injection (all staging columns except eff_dt, expir_dt)
   AND (IFNULL(t.quantity = s.quantity, FALSE) OR (t.quantity IS NULL AND s.quantity IS NULL)) 
   AND (IFNULL(t.supply_constrained = s.supply_constrained, FALSE) OR (t.supply_constrained IS NULL AND s.supply_constrained IS NULL))
   # END dynamic injection
@@ -70,7 +70,7 @@ USING (
     # END dynamic injection
   )
   WHERE NOT(1=1
-    # BEGIN dynamic injection (all staging columns except expir_dt)
+    # BEGIN dynamic injection (all staging columns except eff_dt, expir_dt)
     AND (IFNULL(l.quantity = s.quantity, FALSE) OR (l.quantity IS NULL AND s.quantity IS NULL)) 
     AND (IFNULL(l.supply_constrained = s.supply_constrained, FALSE) OR (l.supply_constrained IS NULL AND s.supply_constrained IS NULL))
     # END dynamic injection
