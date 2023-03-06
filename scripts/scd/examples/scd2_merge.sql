@@ -29,90 +29,90 @@ SELECT 'top load washer', 110, CAST(NULL AS BOOL), CURRENT_DATE AS eff_dt, CAST(
 UNION ALL 
 SELECT 'dishwasher', 30, CAST(NULL AS BOOL), CURRENT_DATE AS eff_dt, CAST(NULL AS DATE);
 
-# Merge all data back to target
+-- Merge all data back to target
 MERGE target t
 USING (
   SELECT s.* 
   FROM staging s
   LEFT JOIN (
     SELECT
-      # BEGIN dynamic injection (all staging columns except expir_dt)
+      -- BEGIN dynamic injection (all staging columns except expir_dt)
       t.unique_key, t.quantity, t.supply_constrained, t.eff_dt
-      # END dynamic injection
+      -- END dynamic injection
       ,IF(1=1
-      # BEGIN dynamic injection (all staging columns except eff_dt, expir_dt)
+      -- BEGIN dynamic injection (all staging columns except eff_dt, expir_dt)
       AND (IFNULL(t.quantity = s.quantity, FALSE) OR (t.quantity IS NULL AND s.quantity IS NULL)) 
       AND (IFNULL(t.supply_constrained = s.supply_constrained, FALSE) OR (t.supply_constrained IS NULL AND s.supply_constrained IS NULL))
-      # END dynamic injection
-      ,t.expir_dt # Don't expire because nothing's changed
-      ,s.eff_dt # Expire any records which have changed
+      -- END dynamic injection
+      ,t.expir_dt -- Don't expire because nothing's changed
+      ,s.eff_dt -- Expire any records which have changed
       ) AS expir_dt
     FROM target t
     JOIN staging s USING(
-      # BEGIN dynamic injection
+      -- BEGIN dynamic injection
       unique_key
-      # END dynamic injection
+      -- END dynamic injection
     )
     WHERE t.expir_dt IS NULL
   ) l USING(
-    # BEGIN dynamic injection
+    -- BEGIN dynamic injection
     unique_key
-    # END dynamic injection
+    -- END dynamic injection
   )
   WHERE NOT(1=1
-    # BEGIN dynamic injection (all staging columns except eff_dt, expir_dt)
+    -- BEGIN dynamic injection (all staging columns except eff_dt, expir_dt)
     AND (IFNULL(l.quantity = s.quantity, FALSE) OR (l.quantity IS NULL AND s.quantity IS NULL)) 
     AND (IFNULL(l.supply_constrained = s.supply_constrained, FALSE) OR (l.supply_constrained IS NULL AND s.supply_constrained IS NULL))
-    # END dynamic injection
+    -- END dynamic injection
   )
   UNION ALL 
   SELECT
-    # BEGIN dynamic injection (all staging columns)
+    -- BEGIN dynamic injection (all staging columns)
     unique_key, quantity, supply_constrained, eff_dt, expir_dt
-    # END dynamic injection
+    -- END dynamic injection
   FROM (
     SELECT
-      # BEGIN dynamic injection (all staging columns except expir_dt)
+      -- BEGIN dynamic injection (all staging columns except expir_dt)
       t.unique_key, t.quantity, t.supply_constrained, t.eff_dt
-      # END dynamic injection
+      -- END dynamic injection
       ,IF(1=1
-      # BEGIN dynamic injection (all staging columns except eff_dt, expir_dt)
+      -- BEGIN dynamic injection (all staging columns except eff_dt, expir_dt)
       AND (IFNULL(t.quantity = s.quantity, FALSE) OR (t.quantity IS NULL AND s.quantity IS NULL)) 
       AND (IFNULL(t.supply_constrained = s.supply_constrained, FALSE) OR (t.supply_constrained IS NULL AND s.supply_constrained IS NULL))
-      # END dynamic injection
-      ,t.expir_dt # Don't expire because nothing's changed
-      ,s.eff_dt # Expire any records which have changed
+      -- END dynamic injection
+      ,t.expir_dt -- Don't expire because nothing's changed
+      ,s.eff_dt -- Expire any records which have changed
       ) AS expir_dt
     FROM target t
     JOIN staging s USING(
-      # BEGIN dynamic injection
+      -- BEGIN dynamic injection
       unique_key
-      # END dynamic injection
+      -- END dynamic injection
     )
     WHERE t.expir_dt IS NULL
   )
 ) s
 ON t.eff_dt = s.eff_dt 
-# BEGIN dynamic injection
+-- BEGIN dynamic injection
 AND t.unique_key = s.unique_key
-# END dynamic injection
+-- END dynamic injection
 
 WHEN MATCHED THEN
-  # Expire previous version of record
+  -- Expire previous version of record
   UPDATE SET t.expir_dt = s.expir_dt
 WHEN NOT MATCHED BY TARGET THEN
-  # Insert new records
+  -- Insert new records
   INSERT(
-    # BEGIN dynamic injection
+    -- BEGIN dynamic injection
     unique_key, quantity, supply_constrained, eff_dt
-    # END dynamic injection
+    -- END dynamic injection
   )
   VALUES(
-    # BEGIN dynamic injection
+    -- BEGIN dynamic injection
     unique_key, quantity, supply_constrained, eff_dt
-    # END dynamic injection
+    -- END dynamic injection
   )
 WHEN NOT MATCHED BY SOURCE THEN
-  # Set expiry for deleted records
-  # or remove this last step if not needed
+  -- Set expiry for deleted records
+  -- or remove this last step if not needed
   UPDATE SET expir_dt = CURRENT_DATE();
