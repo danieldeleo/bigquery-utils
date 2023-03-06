@@ -36,11 +36,9 @@ USING (
   FROM staging s
   LEFT JOIN (
     SELECT
-      # BEGIN dynamic injection (all staging columns except expir_dt)
-      t.unique_key, t.quantity, t.supply_constrained, t.eff_dt
-      # END dynamic injection
+      t.* EXCEPT(expir_dt)
       ,IF(1=1
-      # BEGIN dynamic injection (all staging columns except eff_dt, expir_dt)
+      # BEGIN dynamic injection (all staging columns except expir_dt)
       AND SHA256(FORMAT("%t", STRUCT(t.quantity, t.supply_constrained))) = SHA256(FORMAT("%t", STRUCT(s.quantity, s.supply_constrained)))
       # END dynamic injection
       ,t.expir_dt # Don't expire because nothing's changed
@@ -59,35 +57,27 @@ USING (
     # END dynamic injection
   )
   WHERE NOT(1=1
-    # BEGIN dynamic injection (all staging columns except eff_dt, expir_dt)
+    # BEGIN dynamic injection (all staging columns except expir_dt)
     AND SHA256(FORMAT("%t", STRUCT(l.quantity, l.supply_constrained))) = SHA256(FORMAT("%t", STRUCT(s.quantity, s.supply_constrained)))
     # END dynamic injection
   )
   UNION ALL 
   SELECT
-    # BEGIN dynamic injection (all staging columns)
-    unique_key, quantity, supply_constrained, eff_dt, expir_dt
+    t.* EXCEPT(expir_dt)
+    ,IF(1=1
+    # BEGIN dynamic injection (all staging columns except expir_dt)
+    AND SHA256(FORMAT("%t", STRUCT(t.quantity, t.supply_constrained))) = SHA256(FORMAT("%t", STRUCT(s.quantity, s.supply_constrained)))
     # END dynamic injection
-  FROM (
-    SELECT
-      # BEGIN dynamic injection (all staging columns except expir_dt)
-      t.unique_key, t.quantity, t.supply_constrained, t.eff_dt
-      # END dynamic injection
-      ,IF(1=1
-      # BEGIN dynamic injection (all staging columns except eff_dt, expir_dt)
-      AND SHA256(FORMAT("%t", STRUCT(t.quantity, t.supply_constrained))) = SHA256(FORMAT("%t", STRUCT(s.quantity, s.supply_constrained)))
-      # END dynamic injection
-      ,t.expir_dt # Don't expire because nothing's changed
-      ,s.eff_dt # Expire any records which have changed
-      ) AS expir_dt
-    FROM target t
-    JOIN staging s USING(
-      # BEGIN dynamic injection
-      unique_key
-      # END dynamic injection
-    )
-    WHERE t.expir_dt IS NULL
+    ,t.expir_dt # Don't expire because nothing's changed
+    ,s.eff_dt # Expire any records which have changed
+    ) AS expir_dt
+  FROM target t
+  JOIN staging s USING(
+    # BEGIN dynamic injection
+    unique_key
+    # END dynamic injection
   )
+  WHERE t.expir_dt IS NULL
 ) s
 ON t.eff_dt = s.eff_dt 
 # BEGIN dynamic injection
