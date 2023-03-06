@@ -38,7 +38,7 @@ USING (
     SELECT
       t.* EXCEPT(expir_dt)
       ,IF(1=1
-      -- BEGIN dynamic injection (all staging columns except expir_dt)
+      -- BEGIN dynamic injection (all staging columns except eff_dt, expir_dt)
       AND SHA256(FORMAT("%t", STRUCT(t.quantity, t.supply_constrained))) = SHA256(FORMAT("%t", STRUCT(s.quantity, s.supply_constrained)))
       -- END dynamic injection
       ,t.expir_dt -- Don't expire because nothing's changed
@@ -57,7 +57,7 @@ USING (
     -- END dynamic injection
   )
   WHERE NOT(1=1
-    -- BEGIN dynamic injection (all staging columns except expir_dt)
+    -- BEGIN dynamic injection (all staging columns except eff_dt, expir_dt)
     AND SHA256(FORMAT("%t", STRUCT(l.quantity, l.supply_constrained))) = SHA256(FORMAT("%t", STRUCT(s.quantity, s.supply_constrained)))
     -- END dynamic injection
   )
@@ -65,7 +65,7 @@ USING (
   SELECT
     t.* EXCEPT(expir_dt)
     ,IF(1=1
-    -- BEGIN dynamic injection (all staging columns except expir_dt)
+    -- BEGIN dynamic injection (all staging columns except eff_dt, expir_dt)
     AND SHA256(FORMAT("%t", STRUCT(t.quantity, t.supply_constrained))) = SHA256(FORMAT("%t", STRUCT(s.quantity, s.supply_constrained)))
     -- END dynamic injection
     ,t.expir_dt -- Don't expire because nothing's changed
