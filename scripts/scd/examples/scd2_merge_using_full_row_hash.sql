@@ -37,6 +37,9 @@ SELECT 'dishwasher', 30, CAST(NULL AS BOOL), CURRENT_DATE AS eff_dt, CAST(NULL A
 MERGE target t
 USING (
   -- Records in staging data which have changed or are new
+  -- These records are used for the following clauses:
+  --     * "WHEN NOT MATCHED BY TARGET THEN"
+  --     * "WHEN NOT MATCHED BY SOURCE THEN" 
   SELECT s.* 
   FROM staging s
   LEFT JOIN (
@@ -67,7 +70,9 @@ USING (
     -- END dynamic injection
   )
   UNION ALL
-  -- Latest records from target table which are present in staging data
+  -- Latest records from target table which are present in staging data.
+  -- These records are used for the following clauses
+  --     * "WHEN MATCHED THEN"
   SELECT
     t.* EXCEPT(expir_dt)
     ,IF(1=1
