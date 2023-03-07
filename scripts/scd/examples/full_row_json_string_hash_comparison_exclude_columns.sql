@@ -1,7 +1,7 @@
 -- Create a temp table where one row is changed.
 CREATE TEMP TABLE json_row_hashes AS
 SELECT
-  SHA256(TO_JSON_STRING((SELECT AS STRUCT t.* EXCEPT(row_number)))) row_hash,
+  SHA256(TO_JSON_STRING((SELECT AS STRUCT t.* EXCEPT(row_number, transactions)))) row_hash,
 FROM(
   SELECT
     block_id,
@@ -17,7 +17,7 @@ SELECT
 FROM 
   json_row_hashes
 WHERE row_hash NOT IN(
-  SELECT DISTINCT SHA256(TO_JSON_STRING((SELECT AS STRUCT t.* EXCEPT(row_number)))) row_hash
+  SELECT DISTINCT SHA256(TO_JSON_STRING((SELECT AS STRUCT t.* EXCEPT(row_number, transactions)))) row_hash
   FROM `bigquery-public-data.bitcoin_blockchain.blocks` t
 );
 
@@ -27,6 +27,6 @@ SELECT
 FROM 
   json_row_hashes
 EXCEPT DISTINCT(
-  SELECT SHA256(TO_JSON_STRING((SELECT AS STRUCT t.* EXCEPT(row_number)))) row_hash
+  SELECT SHA256(TO_JSON_STRING((SELECT AS STRUCT t.* EXCEPT(row_number, transactions)))) row_hash
   FROM `bigquery-public-data.bitcoin_blockchain.blocks` t
 );
