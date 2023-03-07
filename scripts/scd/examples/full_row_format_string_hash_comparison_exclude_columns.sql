@@ -15,9 +15,9 @@ FROM(
 SELECT 
   row_hash
 FROM 
-  json_row_hashes
+  fstring_row_hashes
 WHERE row_hash NOT IN(
-  SELECT DISTINCT SHA256(FORMAT("%t",(SELECT AS STRUCT t.* EXCEPT(row_number,transactions)))) row_hash
+  SELECT DISTINCT SHA256(FORMAT("%t",(SELECT AS STRUCT t.* EXCEPT(row_number, transactions)))) row_hash
   FROM `bigquery-public-data.bitcoin_blockchain.blocks` t
 );
 
@@ -25,8 +25,8 @@ WHERE row_hash NOT IN(
 SELECT
   row_hash
 FROM 
-  json_row_hashes
+  fstring_row_hashes
 EXCEPT DISTINCT(
-  SELECT SHA256(FORMAT("%t",(SELECT AS STRUCT t.* EXCEPT(row_number,transactions)))) row_hash
+  SELECT SHA256(FORMAT("%t",(SELECT AS STRUCT t.* EXCEPT(row_number, transactions)))) row_hash
   FROM `bigquery-public-data.bitcoin_blockchain.blocks` t
 );
