@@ -14,25 +14,25 @@ UNION ALL
 SELECT 'dishwasher', 30, CAST(NULL AS BOOL), CURRENT_DATE-1 AS eff_dt, CAST(NULL AS DATE);
 
 CREATE TEMP TABLE staging AS
-SELECT 'refrigerator' AS unique_key, 11 AS quantity, CAST(NULL AS BOOL) AS supply_constrained, CURRENT_DATE AS eff_dt, CAST(NULL AS DATE) AS expir_dt
+SELECT 'refrigerator' AS unique_key, 11 AS quantity, CAST(NULL AS BOOL) AS supply_constrained, CURRENT_DATE AS eff_dt, 
 UNION ALL 
-SELECT 'microwave', 20, CAST(NULL AS BOOL), CURRENT_DATE AS eff_dt, CAST(NULL AS DATE)
+SELECT 'microwave', 20, CAST(NULL AS BOOL), CURRENT_DATE AS eff_dt
 UNION ALL 
-SELECT 'dryer', 230, CAST(NULL AS BOOL), CURRENT_DATE AS eff_dt, CAST(NULL AS DATE)
+SELECT 'dryer', 230, CAST(NULL AS BOOL), CURRENT_DATE AS eff_dt
 UNION ALL 
-SELECT 'oven', 305, CAST(NULL AS BOOL), CURRENT_DATE AS eff_dt, CAST(NULL AS DATE)
+SELECT 'oven', 305, CAST(NULL AS BOOL), CURRENT_DATE AS eff_dt
 UNION ALL 
-SELECT 'top load washer', 110, CAST(NULL AS BOOL), CURRENT_DATE AS eff_dt, CAST(NULL AS DATE)
+SELECT 'top load washer', 110, CAST(NULL AS BOOL), CURRENT_DATE AS eff_dt
 -- Commenting below simulates a deleted record
 -- UNION ALL 
--- SELECT 'front load washer', 20, CAST(NULL AS BOOL), CURRENT_DATE AS eff_dt, CAST(NULL AS DATE)
+-- SELECT 'front load washer', 20, CAST(NULL AS BOOL), CURRENT_DATE AS eff_dt
 UNION ALL 
-SELECT 'dishwasher', 30, CAST(NULL AS BOOL), CURRENT_DATE AS eff_dt, CAST(NULL AS DATE);
+SELECT 'dishwasher', 30, CAST(NULL AS BOOL), CURRENT_DATE AS eff_dt;
 
 -- Merge all data back to target
 MERGE target t
 USING (
-  SELECT s.* 
+  SELECT s.*, CAST(NULL AS DATE) AS expir_dt
   FROM staging s
   LEFT JOIN (
     SELECT

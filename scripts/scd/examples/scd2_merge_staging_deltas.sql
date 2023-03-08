@@ -14,11 +14,11 @@ UNION ALL
 SELECT 'dishwasher', 30, CAST(NULL AS BOOL), CURRENT_DATE-1 AS eff_dt, CAST(NULL AS DATE);
 
 CREATE TEMP TABLE staging AS
-SELECT 'refrigerator' AS unique_key, 11 AS quantity, CAST(NULL AS BOOL) AS supply_constrained, CURRENT_DATE AS eff_dt, CAST(NULL AS DATE) AS expir_dt
+SELECT 'refrigerator' AS unique_key, 11 AS quantity, CAST(NULL AS BOOL) AS supply_constrained, CURRENT_DATE AS eff_dt
 UNION ALL 
-SELECT 'microwave', 22, CAST(NULL AS BOOL), CURRENT_DATE AS eff_dt, CAST(NULL AS DATE)
+SELECT 'microwave', 22, CAST(NULL AS BOOL), CURRENT_DATE AS eff_dt
 UNION ALL 
-SELECT 'dryer', 231, CAST(NULL AS BOOL), CURRENT_DATE AS eff_dt, CAST(NULL AS DATE);
+SELECT 'dryer', 231, CAST(NULL AS BOOL), CURRENT_DATE AS eff_dt;
 
 -- The following example assumes staging data is made up of delta records only.
 
@@ -28,7 +28,7 @@ USING (
   -- Records in staging data which have changed or are new
   -- These records are used for the following clauses:
   --     - "WHEN NOT MATCHED BY TARGET THEN"
-  SELECT s.* 
+  SELECT s.*, CAST(NULL AS DATE) AS expir_dt
   FROM target t
   JOIN staging s USING(
     -- BEGIN dynamic injection

@@ -14,20 +14,20 @@ UNION ALL
 SELECT 'dishwasher', 30, CAST(NULL AS BOOL), CURRENT_DATE-1 AS eff_dt, CAST(NULL AS DATE);
 
 CREATE TEMP TABLE staging AS
-SELECT 'refrigerator' AS unique_key, 11 AS quantity, CAST(NULL AS BOOL) AS supply_constrained, CURRENT_DATE AS eff_dt, CAST(NULL AS DATE) AS expir_dt
+SELECT 'refrigerator' AS unique_key, 11 AS quantity, CAST(NULL AS BOOL) AS supply_constrained, CURRENT_DATE AS eff_dt, 
 UNION ALL 
-SELECT 'microwave', 20, CAST(NULL AS BOOL), CURRENT_DATE AS eff_dt, CAST(NULL AS DATE)
+SELECT 'microwave', 20, CAST(NULL AS BOOL), CURRENT_DATE AS eff_dt
 UNION ALL 
-SELECT 'dryer', 230, CAST(NULL AS BOOL), CURRENT_DATE AS eff_dt, CAST(NULL AS DATE)
+SELECT 'dryer', 230, CAST(NULL AS BOOL), CURRENT_DATE AS eff_dt
 UNION ALL 
-SELECT 'oven', 305, CAST(NULL AS BOOL), CURRENT_DATE AS eff_dt, CAST(NULL AS DATE)
+SELECT 'oven', 305, CAST(NULL AS BOOL), CURRENT_DATE AS eff_dt
 UNION ALL 
-SELECT 'top load washer', 110, CAST(NULL AS BOOL), CURRENT_DATE AS eff_dt, CAST(NULL AS DATE)
+SELECT 'top load washer', 110, CAST(NULL AS BOOL), CURRENT_DATE AS eff_dt
 -- Commenting below simulates a deleted record
 -- UNION ALL 
--- SELECT 'front load washer', 20, CAST(NULL AS BOOL), CURRENT_DATE AS eff_dt, CAST(NULL AS DATE)
+-- SELECT 'front load washer', 20, CAST(NULL AS BOOL), CURRENT_DATE AS eff_dt
 UNION ALL 
-SELECT 'dishwasher', 30, CAST(NULL AS BOOL), CURRENT_DATE AS eff_dt, CAST(NULL AS DATE);
+SELECT 'dishwasher', 30, CAST(NULL AS BOOL), CURRENT_DATE AS eff_dt;
 
 -- The following example assuming staging data is made up of full table snapshots
 -- exported from an upstream source. There is no column which tracks changes and 
@@ -39,7 +39,7 @@ USING (
   -- Records in staging data which are NEW or CHANGED
   -- These records are used for the following clauses:
   --     * "WHEN NOT MATCHED BY TARGET THEN"
-  SELECT s.* 
+  SELECT s.*, CAST(NULL AS DATE) AS expir_dt
   FROM staging s
   LEFT JOIN (
     SELECT
