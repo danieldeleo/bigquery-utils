@@ -1,18 +1,32 @@
 steps:
   ###########################################################
-  # Build and deploy BigQuery assets
+  # Create BigQuery Datasets and set IAM policies
   ###########################################################
-  - name: dataformco/dataform
-    dir: dataform/examples/bigquery_cicd
-    entrypoint: bash
+  - id: 'tf apply'
+    name: 'hashicorp/terraform:1.0.0'
+    entrypoint: 'bash'
     args:
-      - run.sh
+      - run_terraform.sh
     env:
       - PROJECT_ID=${PROJECT_ID}
       - BQ_LOCATION=${_BQ_LOCATION}
       - BRANCH_NAME=${BRANCH_NAME}
       - SHORT_SHA=${SHORT_SHA}
-      - _JS_BUCKET=${_JS_BUCKET}
+      - _PR_NUMBER=${_PR_NUMBER}
+  ###########################################################
+  # Build and deploy BigQuery SQL objects
+  ###########################################################
+  - id: 'dataform run'
+    name: dataformco/dataform
+    dir: dataform/examples/bigquery_cicd
+    entrypoint: bash
+    args:
+      - run_dataform.sh
+    env:
+      - PROJECT_ID=${PROJECT_ID}
+      - BQ_LOCATION=${_BQ_LOCATION}
+      - BRANCH_NAME=${BRANCH_NAME}
+      - SHORT_SHA=${SHORT_SHA}
       - _PR_NUMBER=${_PR_NUMBER}
       - DATAFORM_ACTIONS=${_DATAFORM_ACTIONS}
       - DATAFORM_TAGS=${_DATAFORM_TAGS}

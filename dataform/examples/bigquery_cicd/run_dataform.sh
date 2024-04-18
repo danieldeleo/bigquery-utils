@@ -1,5 +1,7 @@
 #!/bin/bash
 
+cd dataform
+
 if [[ "${BRANCH_NAME}" != "master" ]]; then
   export ENV=test
 else
