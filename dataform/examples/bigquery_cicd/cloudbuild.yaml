@@ -4,6 +4,7 @@ steps:
   ###########################################################
   - id: 'tf apply'
     name: 'hashicorp/terraform:1.0.0'
+    dir: dataform/examples/bigquery_cicd
     entrypoint: 'bash'
     args:
       - run_terraform.sh
