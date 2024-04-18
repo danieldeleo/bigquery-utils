@@ -6,6 +6,6 @@ module "bigquery-dataset" {
     owner          = { role = "OWNER", type = "user" }
   }
   access_identities = {
-    owner          = "danieldeleo@google.com"
+    owner          = "ddeleo@google.com"
   }
 }
