@@ -3,7 +3,7 @@ steps:
   # Create BigQuery Datasets and set IAM policies
   ###########################################################
   - id: 'tf apply'
-    name: 'hashicorp/terraform:1.0.0'
+    name: 'hashicorp/terraform:latest'
     dir: dataform/examples/bigquery_cicd
     entrypoint: 'sh'
     args:
