@@ -1,9 +1,8 @@
 cd terraform
 
-terraform init
-
 if [ -d "environments/$BRANCH_NAME/" ]; then
     cd environments/$BRANCH_NAME      
+    terraform init
     terraform apply -auto-approve
 else
     echo "***************************** SKIPPING APPLYING *******************************"
