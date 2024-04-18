@@ -1,13 +1,5 @@
 steps:
   ###########################################################
-  # Initialize Terraform
-  ###########################################################
-  - id: 'tf init'
-    name: 'hashicorp/terraform:1.0.0'
-    dir: dataform/examples/bigquery_cicd
-    args:
-      - init
-  ###########################################################
   # Create BigQuery Datasets and set IAM policies
   ###########################################################
   - id: 'tf apply'
