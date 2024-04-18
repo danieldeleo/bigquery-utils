@@ -1,3 +1,5 @@
+cd terraform
+
 if [ -d "environments/$BRANCH_NAME/" ]; then
     cd environments/$BRANCH_NAME      
     terraform apply -auto-approve
